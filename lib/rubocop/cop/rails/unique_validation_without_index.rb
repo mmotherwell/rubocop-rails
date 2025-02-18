@@ -27,7 +27,7 @@ module RuboCop
       class UniqueValidationWithoutIndex < Base
         include ActiveRecordHelper
 
-        MSG = 'Uniqueness validation should have a unique index on the database column.'
+        MSG = 'Uniqueness validation should have a unique index on the database column - add_index :%<tablename>, %<columns>, unique: true'
         RESTRICT_ON_SEND = %i[validates].freeze
 
         def on_send(node)
@@ -39,7 +39,10 @@ module RuboCop
           return unless names
           return if with_index?(klass, table, names)
 
-          add_offense(node)
+          columns = names.size > 1 ? "[:#{names.join(", :")}]" : ":#{names.first}"
+          message = MSG.gsub("%<tablename>", table.name).gsub("%<columns>", columns)
+
+          add_offense(node, message: message)
         end
 
         private
